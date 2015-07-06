@@ -7,8 +7,6 @@ namespace CostFunction
     public class CostAnalyzer<TCost> where TCost : IComparable<TCost>
     {        
         private IList<SortedList<int, TCost>> OrderedNeighboursFromTo { get; set; }
-        private IList<SortedList<int, TCost>> OrderedNeighboursToFrom { get; set; }
-
         private class Comparer : IComparer<int>
         {
             internal TCost[] items;
