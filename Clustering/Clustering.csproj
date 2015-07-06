@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="Algorithms\LargeATSPPreClustering.cs" />
     <Compile Include="Cluster.cs" />
+    <Compile Include="ClusteredGraphToCostMatrix.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

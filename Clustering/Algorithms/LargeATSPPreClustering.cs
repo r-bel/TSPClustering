@@ -18,7 +18,7 @@ namespace Clustering.Algorithms
 
             public IList<int> NodesAsIndexes { get; private set; }
 
-            public List<Cluster<TNode>> ListOfClusters { get; private set; }
+            public List<Cluster<TNode, double>> ListOfClusters { get; private set; }
             
             public ClusterFactory(IList<TNode> allNodes, CostAnalyzer<double> costanalyzer)
             {
@@ -26,7 +26,7 @@ namespace Clustering.Algorithms
                 this.costanalyzer = costanalyzer;
                 // We work with the indexes. Nodes will be flagged as part of cluster by removing them from this list.
                 NodesAsIndexes = Enumerable.Range(0, allNodes.Count).ToList();
-                ListOfClusters = new List<Cluster<TNode>>();
+                ListOfClusters = new List<Cluster<TNode, double>>();
             }
 
             public void CreateCluster(IList<int> clusterNodes)
@@ -40,14 +40,14 @@ namespace Clustering.Algorithms
                     foreach (var j in clusterNodes)
                         NodesAsIndexes.Remove(j); // accepted as final member of the cluster           
 
-                    ListOfClusters.Add(new Cluster<TNode>(clusterNodes.Select(n => allNodes[n]), costOfCluster, reverseCost));
+                    ListOfClusters.Add(new Cluster<TNode, double>(clusterNodes.Select(n => allNodes[n]), costOfCluster, reverseCost));
                 }
             }
 
             public void CreateSingletonClusters()
             {
                 foreach (var j in NodesAsIndexes)
-                    ListOfClusters.Add(new Cluster<TNode>(new[] { allNodes[j] }, 0, 0));
+                    ListOfClusters.Add(new Cluster<TNode, double>(new[] { allNodes[j] }, 0, 0));
 
                 NodesAsIndexes.Clear();
             }
@@ -106,7 +106,7 @@ namespace Clustering.Algorithms
             return constructingCluster;
         }
 
-        public IList<Cluster<TNode>> Solve([NotNull] IList<TNode> Nodes, [NotNull] CostAnalyzer<double> costanalyzer, double maxCostOfNearestNeighbor, int maxNodesPerCluster = -1)
+        public IList<Cluster<TNode, double>> Solve([NotNull] IList<TNode> Nodes, [NotNull] CostAnalyzer<double> costanalyzer, double maxCostOfNearestNeighbor, int maxNodesPerCluster = -1)
         {
             var clusterFactory = new ClusterFactory(Nodes, costanalyzer);
 

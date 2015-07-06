@@ -11,11 +11,6 @@ namespace CostFunction
         {
             internal TCost[] items;
 
-            //public Comparer(int dimension)
-            //{
-            //    items = new TCost[dimension];
-            //}
-
             public Comparer(TCost[] items)
             {
                 this.items = items;

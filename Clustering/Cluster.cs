@@ -8,14 +8,14 @@ using CostFunction;
 
 namespace Clustering
 {
-    public class Cluster<TNode>
+    public class Cluster<TNode, TCost>
     {
         public IEnumerable<TNode> Nodes { get; private set; }
 
-        public double TotalCost { get; private set; }
-        public double TotalCostReverse { get; private set; }
+        public TCost TotalCost { get; private set; }
+        public TCost TotalCostReverse { get; private set; }
 
-        public Cluster(IEnumerable<TNode> nodes, double totalCost, double totalCostReverse)
+        public Cluster(IEnumerable<TNode> nodes, TCost totalCost, TCost totalCostReverse)
         {
             this.Nodes = nodes;
             this.TotalCost = totalCost;
