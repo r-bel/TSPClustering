@@ -12,53 +12,89 @@ namespace Clustering
     {
         public CostMatrix<double> CostMatrix { get; private set; }
 
+        private struct ClusterNode
+        {
+            public Cluster<TNode, double> cluster;
+            public TNode node;
+        }
+
+        private IList<ClusterNode> ClusterEndPoints { get; set; }
+        
         public ClusteredGraphToCostMatrix(ICostByReference<TNode, double> costsUnclustered, IList<Cluster<TNode, double>> clusters)
         {
             var costsArrayClusters = new List<double[]>();
 
-            foreach (var firstCluster in clusters)
+            var relevantNodes = clusters.SelectMany(cl => cl.Nodes.Count() == 1 ?
+                new[] { new ClusterNode { cluster = cl, node = cl.Nodes.First() } } :
+                new[] { new ClusterNode { cluster = cl, node = cl.Nodes.First() }, new ClusterNode { cluster = cl, node = cl.Nodes.Last() } });
+
+            ClusterEndPoints = relevantNodes.ToList();
+
+            foreach (var first in ClusterEndPoints)
             {
-                var nodesFirstCluster = firstCluster.Nodes.Count() == 1 ? new[] { firstCluster.Nodes.First() } : new[] { firstCluster.Nodes.First(), firstCluster.Nodes.Last() };
-                foreach (var firstnode in nodesFirstCluster)
-                {
-                    var costsForFirstNode = new List<double>();
+                var costsForFirstNode = new List<double>();
                     
-                    foreach (var secondCluster in clusters)
+                foreach (var second in ClusterEndPoints)
+                {
+                    if (!Object.ReferenceEquals(first.cluster, second.cluster))
                     {
-                        var nodesSecondCluster = secondCluster.Nodes.Count() == 1 ? new[] { secondCluster.Nodes.First() } : new[] { secondCluster.Nodes.First(), secondCluster.Nodes.Last() };
-                        foreach (var secondnode in nodesSecondCluster)
+                        var cost = costsUnclustered.Cost(first.node, second.node)*100000;
+                        costsForFirstNode.Add(cost);
+                    }
+                    else
+                    {
+                        if (Object.ReferenceEquals(first.node, second.node))
                         {
-                            if (!Object.ReferenceEquals(firstCluster, secondCluster))
+                            var cost = costsUnclustered.Cost(first.node, second.node);
+                            costsForFirstNode.Add(cost);
+                        }
+                        else
+                        {
+                            double cost;
+                            if (Object.ReferenceEquals(first, first.cluster.Nodes.First()))
                             {
-                                var cost = costsUnclustered.Cost(firstnode, secondnode);
-                                costsForFirstNode.Add(cost);
+                                cost = first.cluster.TotalCost - first.cluster.TotalCostReverse < 0D ? 0D : first.cluster.TotalCost - first.cluster.TotalCostReverse;
                             }
                             else
                             {
-                                if (Object.ReferenceEquals(firstnode, secondnode))
-                                {
-                                    var cost = costsUnclustered.Cost(firstnode, secondnode);
-                                    costsForFirstNode.Add(cost);
-                                }
-                                else
-                                {
-                                    if (Object.ReferenceEquals(firstnode, firstCluster.Nodes.First()))
-                                    {
-                                        costsForFirstNode.Add(firstCluster.TotalCost - firstCluster.TotalCostReverse < 0D ? 0D : firstCluster.TotalCost - firstCluster.TotalCostReverse);
-                                    }
-                                    else
-                                    {
-                                        costsForFirstNode.Add(firstCluster.TotalCostReverse - firstCluster.TotalCost < 0D ? 0D : firstCluster.TotalCostReverse - firstCluster.TotalCost);
-                                    }
-                                }
+                                cost = first.cluster.TotalCostReverse - first.cluster.TotalCost < 0D ? 0D : first.cluster.TotalCostReverse - first.cluster.TotalCost;
                             }
-                        }                        
+                            costsForFirstNode.Add(cost);
+                        }
                     }
-                    costsArrayClusters.Add(costsForFirstNode.ToArray());
-                }
+                }                        
+                
+                costsArrayClusters.Add(costsForFirstNode.ToArray());
             }
 
             CostMatrix = new CostMatrix<double>(costsArrayClusters.ToArray());
+        }
+
+        public IList<TNode> ClusterPathToFullPath(IEnumerable<int> pathThroughClusters)
+        {
+            var routeReconstruction = new List<TNode>(); // Build the routing
+
+            ClusterNode prevClusterNode = new ClusterNode { cluster = null, node = null };
+            
+            foreach (var idx in pathThroughClusters) // iterate over route among clusters
+            {
+                var clusternode = ClusterEndPoints[idx];
+
+                if (prevClusterNode.cluster != null && object.ReferenceEquals(clusternode.cluster, prevClusterNode.cluster)) // Add in betweens
+                {
+                    var nodes = object.ReferenceEquals(clusternode.cluster.Nodes.Last(), clusternode.node) ? clusternode.cluster.Nodes : clusternode.cluster.Nodes.Reverse();
+
+                    routeReconstruction.AddRange(nodes);
+                }
+                else if(clusternode.cluster.Nodes.Count() == 1)
+                {
+                    routeReconstruction.Add(ClusterEndPoints[idx].node);
+                }
+
+                prevClusterNode = clusternode;
+            }
+
+            return routeReconstruction;
         }
     }
 }
