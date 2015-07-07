@@ -62,35 +62,38 @@ namespace Clustering.Algorithms
 
             bool foundNextNodeInChain;
 
-            do
+            if (maxNodesPerCluster < 0 || constructingCluster.Count < maxNodesPerCluster-1)
             {
-                foundNextNodeInChain = false;
-
-                var myNeighborsNotAlreadyInConstructingCluster =
-                    costanalyzer.AllNeighborsOrdered(currentPointer).Where(neighbor => currentPointer != neighbor.Key && !constructingCluster.Contains(neighbor.Key));
-
-                if (myNeighborsNotAlreadyInConstructingCluster.Any())
+                do
                 {
-                    var nearestNeighbor = myNeighborsNotAlreadyInConstructingCluster.FirstOrDefault(); // The closest neighbor
+                    foundNextNodeInChain = false;
 
-                    if (nearestNeighbor.Value <= maxCostOfNearestNeighbor
-                        && nodesAsIndexes.Contains(nearestNeighbor.Key)) // No overlapping with other clusters. We stop if the next one is in another cluster.
+                    var myNeighborsNotAlreadyInConstructingCluster =
+                        costanalyzer.AllNeighborsOrdered(currentPointer).Where(neighbor => currentPointer != neighbor.Key && !constructingCluster.Contains(neighbor.Key));
+
+                    if (myNeighborsNotAlreadyInConstructingCluster.Any())
                     {
-                        if (constructingCluster.Count == 0)
-                            constructingCluster.Add(currentPointer); // If we start construct a cluster don't forget to add the beginning node.
+                        var nearestNeighbor = myNeighborsNotAlreadyInConstructingCluster.FirstOrDefault(); // The closest neighbor
 
-                        if (atTail)
-                            constructingCluster.Add(nearestNeighbor.Key);
-                        else
-                            constructingCluster.Insert(0, nearestNeighbor.Key);
+                        if (nearestNeighbor.Value <= maxCostOfNearestNeighbor
+                            && nodesAsIndexes.Contains(nearestNeighbor.Key)) // No overlapping with other clusters. We stop if the next one is in another cluster.
+                        {
+                            if (constructingCluster.Count == 0)
+                                constructingCluster.Add(currentPointer); // If we start construct a cluster don't forget to add the beginning node.
 
-                        currentPointer = nearestNeighbor.Key; // Move the pointer to the neighbor
+                            if (atTail)
+                                constructingCluster.Add(nearestNeighbor.Key);
+                            else
+                                constructingCluster.Insert(0, nearestNeighbor.Key);
 
-                        foundNextNodeInChain = true;
+                            currentPointer = nearestNeighbor.Key; // Move the pointer to the neighbor
+
+                            foundNextNodeInChain = true;
+                        }
                     }
                 }
+                while (foundNextNodeInChain && (maxNodesPerCluster < 0 || constructingCluster.Count < maxNodesPerCluster));
             }
-            while (foundNextNodeInChain && (maxNodesPerCluster < 0 || constructingCluster.Count < maxNodesPerCluster));
         }
 
         private static List<int> CalculateCluster(IList<int> nodesAsIndexes, CostAnalyzer<double> costanalyzer, CostAnalyzer<double> transposedCostanalyzer, double maxCostOfNearestNeighbor, int maxNodesPerCluster)
